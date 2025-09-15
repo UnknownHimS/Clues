@@ -5,20 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Detective Clues Board - Noir Theme</title>
 <style>
-  /* Background and base */
   @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Roboto+Slab&display=swap');
 
   body, html {
     margin: 0; padding: 0; height: 100%; overflow: hidden;
-    background:
-      radial-gradient(circle at center, #1a1a1a, #000 80%);
+    background: radial-gradient(circle at center, #1a1a1a, #000 80%);
     color: #f5d88c;
     font-family: 'Roboto Slab', serif;
     user-select: none;
     position: relative;
   }
 
-  /* Grain texture overlay */
   body::before {
     content: "";
     pointer-events: none;
@@ -29,18 +26,15 @@
     z-index: 1;
   }
 
-  /* Vignette */
   body::after {
     content: "";
     pointer-events: none;
     position: fixed;
     top:0; left:0; right:0; bottom:0;
-    background:
-      radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.9) 100%);
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.9) 100%);
     z-index: 2;
   }
 
-  /* Toolbar */
   #toolbar {
     position: fixed;
     top: 10px; left: 50%; transform: translateX(-50%);
@@ -64,8 +58,7 @@
     border-radius: 6px;
     font-family: 'Special Elite', monospace;
     font-size: 14px;
-    box-shadow:
-      inset 0 0 4px #f5a62377;
+    box-shadow: inset 0 0 4px #f5a62377;
     transition: border-color 0.3s ease;
   }
 
@@ -78,9 +71,7 @@
   #toolbar textarea:focus {
     outline: none;
     border-color: #f5a623cc;
-    box-shadow:
-      0 0 8px #f5a623cc,
-      inset 0 0 6px #f5a623cc;
+    box-shadow: 0 0 8px #f5a623cc, inset 0 0 6px #f5a623cc;
   }
 
   #toolbar input[type="text"] {
@@ -109,7 +100,6 @@
     box-shadow: 0 0 14px #f5a623cc;
   }
 
-  /* Board */
   #board {
     position: absolute;
     top: 60px; bottom: 0; left: 0; right: 0;
@@ -122,7 +112,6 @@
     cursor: grabbing;
   }
 
-  /* Clue node styling */
   .clue-node {
     position: absolute;
     background: rgba(30, 30, 30, 0.85);
@@ -133,26 +122,22 @@
     box-sizing: border-box;
     cursor: move;
     color: #f5d88c;
-    box-shadow:
-      0 0 1px #f5a623cc,
-      inset 0 0 8px #f5a62344;
+    box-shadow: 0 0 1px #f5a623cc, inset 0 0 8px #f5a62344;
     font-family: 'Special Elite', monospace;
     transition: box-shadow 0.3s ease, border-color 0.3s ease;
     user-select: text;
     z-index: 10;
   }
+
   .clue-node.dragging {
     opacity: 0.85;
-    box-shadow:
-      0 0 24px #f5a623ff,
-      inset 0 0 16px #f5a62388;
+    box-shadow: 0 0 24px #f5a623ff, inset 0 0 16px #f5a62388;
     z-index: 100;
   }
+
   .clue-node:hover {
     border-color: #f5d88c;
-    box-shadow:
-      0 0 18px #f5d88ccc,
-      inset 0 0 12px #f5d88c88;
+    box-shadow: 0 0 18px #f5d88ccc, inset 0 0 12px #f5d88c88;
   }
 
   .clue-node h4 {
@@ -177,7 +162,24 @@
     box-shadow: 0 0 8px #b37f16cc;
   }
 
-  /* SVG connections */
+  .clue-node .delete-btn {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: #f5a623;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 20;
+    transition: color 0.2s ease;
+  }
+
+  .clue-node .delete-btn:hover {
+    color: #ff5555;
+  }
+
   svg#connections {
     position: absolute;
     top: 0; left: 0;
@@ -186,7 +188,6 @@
     z-index: 3;
   }
 
-  /* Instruction text */
   #instruction {
     position: fixed;
     bottom: 12px;
@@ -250,10 +251,20 @@
     div.dataset.id = clue.id;
 
     div.innerHTML = `
+      <button class="delete-btn" title="Delete Clue">&times;</button>
       <h4>${clue.name}</h4>
       <p>${clue.desc.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
       ${clue.img ? `<img src="${clue.img}" alt="Clue Image" onerror="this.style.display='none'" />` : ''}
     `;
+
+    div.querySelector('.delete-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      clues = clues.filter(c => c.id !== clue.id);
+      connections = connections.filter(conn => conn.from !== clue.id && conn.to !== clue.id);
+      saveData();
+      renderClues();
+      renderConnections();
+    });
 
     div.addEventListener('mousedown', (e) => {
       draggingNode = div;
@@ -334,7 +345,7 @@
     draggingNode.style.top = y + 'px';
   });
 
-  document.addEventListener('mouseup', (e) => {
+  document.addEventListener('mouseup', () => {
     if (draggingNode) {
       const id = draggingNode.dataset.id;
       const clue = clues.find(c => c.id === id);
@@ -347,8 +358,7 @@
     }
   });
 
-  // Cancel selection if clicking outside
-  document.addEventListener('click', (e) => {
+  document.addEventListener('click', () => {
     if (selectedForConnect !== null) {
       selectedForConnect = null;
       document.querySelectorAll('.clue-node').forEach(node => {
@@ -391,7 +401,6 @@
     }
   });
 
-  // SVG marker for arrowheads
   function setupSVGMarker() {
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
     const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
